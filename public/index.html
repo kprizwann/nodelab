@@ -3,58 +3,300 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>User Authentication</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            background:
+                linear-gradient(135deg, #0f172a, #1e1b4b, #312e81);
+
+            color: white;
+        }
+
+        .container {
+            width: 900px;
+            max-width: 90%;
+            min-height: 520px;
+
+            display: flex;
+
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+
+            backdrop-filter: blur(20px);
+
+            border-radius: 25px;
+
+            box-shadow:
+                0 25px 60px rgba(0, 0, 0, 0.4);
+
+            overflow: hidden;
+        }
+
+        /* LEFT SIDE */
+
+        .welcome {
+            width: 45%;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+            padding: 50px;
+
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .welcome h1 {
+            font-size: 45px;
+            margin-bottom: 20px;
+        }
+
+        .welcome h1 span {
+            color: #a78bfa;
+        }
+
+        .welcome p {
+            color: #cbd5e1;
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        .tag {
+            margin-top: 30px;
+
+            display: inline-block;
+
+            color: #c4b5fd;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        /* RIGHT SIDE */
+
+        .auth {
+            width: 55%;
+            padding: 45px;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .auth h2 {
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .section {
+            margin-bottom: 28px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+
+            margin-bottom: 12px;
+
+            border: 1px solid rgba(255, 255, 255, 0.2);
+
+            border-radius: 10px;
+
+            background: rgba(255, 255, 255, 0.08);
+
+            color: white;
+
+            outline: none;
+
+            font-size: 15px;
+        }
+
+        input::placeholder {
+            color: #cbd5e1;
+        }
+
+        input:focus {
+            border-color: #a78bfa;
+
+            box-shadow:
+                0 0 0 3px rgba(167, 139, 250, 0.15);
+        }
+
+        button {
+            width: 100%;
+
+            padding: 14px;
+
+            border: none;
+            border-radius: 10px;
+
+            background: linear-gradient(
+                135deg,
+                #8b5cf6,
+                #6366f1
+            );
+
+            color: white;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            cursor: pointer;
+
+            transition: 0.25s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 10px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        .divider {
+            height: 1px;
+
+            background: rgba(255, 255, 255, 0.15);
+
+            margin: 5px 0 25px;
+        }
+
+        #message {
+            margin-top: 10px;
+            text-align: center;
+            color: #c4b5fd;
+            font-weight: bold;
+        }
+
+        @media (max-width: 700px) {
+
+            .container {
+                flex-direction: column;
+            }
+
+            .welcome,
+            .auth {
+                width: 100%;
+            }
+
+            .welcome {
+                padding: 35px;
+            }
+
+            .welcome h1 {
+                font-size: 35px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-    <h1>User Authentication</h1>
+    <div class="container">
 
-    <h2>Sign Up</h2>
+        <!-- LEFT SIDE -->
 
-    <input
-        type="text"
-        id="signupName"
-        placeholder="Name"
-    >
+        <div class="welcome">
 
-    <input
-        type="email"
-        id="signupEmail"
-        placeholder="Email"
-    >
+            <h1>
+                Welcome to
+                <span>Auth.</span>
+            </h1>
 
-    <input
-        type="password"
-        id="signupPassword"
-        placeholder="Password"
-    >
+            <p>
+                A simple and secure user authentication
+                system built using Node.js, Express
+                and JSON.
+            </p>
 
-    <button onclick="signup()">
-        Sign Up
-    </button>
+            <div class="tag">
+                NODE.JS • EXPRESS • JSON
+            </div>
+
+        </div>
 
 
-    <h2>Log In</h2>
+        <!-- RIGHT SIDE -->
 
-    <input
-        type="email"
-        id="loginEmail"
-        placeholder="Email"
-    >
+        <div class="auth">
 
-    <input
-        type="password"
-        id="loginPassword"
-        placeholder="Password"
-    >
+            <!-- SIGN UP -->
 
-    <button onclick="login()">
-        Log In
-    </button>
+            <div class="section">
 
-    <p id="message"></p>
+                <h2>Create Account</h2>
+
+                <input
+                    type="text"
+                    id="signupName"
+                    placeholder="Full Name"
+                >
+
+                <input
+                    type="email"
+                    id="signupEmail"
+                    placeholder="Email Address"
+                >
+
+                <input
+                    type="password"
+                    id="signupPassword"
+                    placeholder="Password"
+                >
+
+                <button onclick="signup()">
+                    Create Account
+                </button>
+
+            </div>
+
+
+            <div class="divider"></div>
+
+
+            <!-- LOGIN -->
+
+            <div class="section">
+
+                <h2>Welcome Back</h2>
+
+                <input
+                    type="email"
+                    id="loginEmail"
+                    placeholder="Email Address"
+                >
+
+                <input
+                    type="password"
+                    id="loginPassword"
+                    placeholder="Password"
+                >
+
+                <button onclick="login()">
+                    Log In
+                </button>
+
+            </div>
+
+            <p id="message"></p>
+
+        </div>
+
+    </div>
 
 
     <script>
@@ -128,8 +370,8 @@
 
             } else {
 
-                document.getElementById("message").textContent =
-                    data.message;
+                document.getElementById("message")
+                    .textContent = data.message;
             }
         }
 

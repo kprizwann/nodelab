@@ -1,267 +1,232 @@
 const express = require("express");
 const fs = require("fs");
-const path = require("path");
 const EventEmitter = require("events");
+const { MongoClient } = require("mongodb");
 
 const app = express();
 
 const PORT = 3000;
 
-const usersFile =
-    path.join(__dirname, "users.json");
 
-const auditFile =
-    path.join(__dirname, "audit.log");
+// MongoDB connection
+const client = new MongoClient("mongodb://localhost:27017");
+
+let usersCollection;
 
 
-// =====================================
-// MIDDLEWARE
-// =====================================
+// Audit file
+const auditFile = "audit.log";
 
+
+// Middleware
 app.use(express.json());
 
-app.use(
-    express.static(
-        path.join(__dirname, "public")
-    )
-);
+app.use(express.static("public"));
 
 
-// =====================================
-// EVENTS
-// =====================================
-
-const authEvents =
-    new EventEmitter();
+// Create EventEmitter
+const userEvents = new EventEmitter();
 
 
-// Signup event
-authEvents.on("signup", (user) => {
+// SIGN UP EVENT
+userEvents.on("signup", (user) => {
 
     const message =
-        `[${new Date().toISOString()}] ` +
-        `SIGNUP: ${user.email}\n`;
+        `[${new Date().toLocaleString()}] SIGNUP: ${user.email}\n`;
 
-    fs.appendFileSync(
-        auditFile,
-        message
-    );
+    fs.appendFileSync(auditFile, message);
+
+    console.log(message.trim());
+
 });
 
 
-// Login event
-authEvents.on("login", (user) => {
+// LOGIN EVENT
+userEvents.on("login", (user) => {
 
     const message =
-        `[${new Date().toISOString()}] ` +
-        `LOGIN: ${user.email}\n`;
+        `[${new Date().toLocaleString()}] LOGIN: ${user.email}\n`;
 
-    fs.appendFileSync(
-        auditFile,
-        message
-    );
+    fs.appendFileSync(auditFile, message);
+
+    console.log(message.trim());
+
 });
 
 
-// =====================================
-// READ USERS
-// =====================================
+// SIGN UP ROUTE
+app.post("/signup", async (req, res) => {
 
-function readUsers() {
+    try {
 
-    const data =
-        fs.readFileSync(
-            usersFile,
-            "utf-8"
-        );
+        const { name, email, password } = req.body;
 
-    return JSON.parse(data);
+
+        // Check empty fields
+        if (!name || !email || !password) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Please fill in all fields."
+            });
+
+        }
+
+
+        // Check if email already exists
+        const existingUser = await usersCollection.findOne({
+            email: email.toLowerCase()
+        });
+
+
+        if (existingUser) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Email already registered."
+            });
+
+        }
+
+
+        // Create new user
+        const newUser = {
+            name: name,
+            email: email.toLowerCase(),
+            password: password
+        };
+
+
+        // Save user to MongoDB
+        await usersCollection.insertOne(newUser);
+
+
+        // Emit signup event
+        userEvents.emit("signup", newUser);
+
+
+        // Send response
+        res.json({
+            success: true,
+            message: "Registration successful!"
+        });
+
+    } catch (error) {
+
+        console.error("Signup error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Server error."
+        });
+
+    }
+
+});
+
+
+// LOGIN ROUTE
+app.post("/login", async (req, res) => {
+
+    try {
+
+        const { email, password } = req.body;
+
+
+        // Check empty fields
+        if (!email || !password) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Please enter email and password."
+            });
+
+        }
+
+
+        // Find user in MongoDB
+        const user = await usersCollection.findOne({
+            email: email.toLowerCase(),
+            password: password
+        });
+
+
+        // User not found
+        if (!user) {
+
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password."
+            });
+
+        }
+
+
+        // Emit login event
+        userEvents.emit("login", user);
+
+
+        // Send success response
+        res.json({
+            success: true,
+            message: "Login successful!",
+            name: user.name
+        });
+
+    } catch (error) {
+
+        console.error("Login error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Server error."
+        });
+
+    }
+
+});
+
+
+// Connect to MongoDB and start server
+async function startServer() {
+
+    try {
+
+        // Connect to MongoDB
+        await client.connect();
+
+        console.log("Connected to MongoDB");
+
+
+        // Select database
+        const database = client.db("loginDB");
+
+
+        // Select collection
+        usersCollection = database.collection("users");
+
+
+        console.log("Database: loginDB");
+        console.log("Collection: users");
+
+
+        // Start server
+        app.listen(PORT, () => {
+
+            console.log(
+                `Server running at http://localhost:${PORT}`
+            );
+
+        });
+
+    } catch (error) {
+
+        console.error("MongoDB connection failed:", error);
+
+    }
+
 }
 
 
-// =====================================
-// SAVE USERS
-// =====================================
-
-function saveUsers(users) {
-
-    fs.writeFileSync(
-        usersFile,
-        JSON.stringify(
-            users,
-            null,
-            2
-        ),
-        "utf-8"
-    );
-}
-
-
-// =====================================
-// SIGN UP
-// =====================================
-
-app.post("/signup", (req, res) => {
-
-    const {
-        name,
-        email,
-        password
-    } = req.body;
-
-
-    if (!name || !email || !password) {
-
-        return res.status(400).json({
-
-            success: false,
-
-            message:
-                "Please fill in all fields."
-
-        });
-    }
-
-
-    const users =
-        readUsers();
-
-
-    const existingUser =
-        users.find(
-            user =>
-                user.email === email
-        );
-
-
-    if (existingUser) {
-
-        return res.status(409).json({
-
-            success: false,
-
-            message:
-                "Email already registered."
-
-        });
-    }
-
-
-    const newUser = {
-
-        name,
-        email,
-        password
-
-    };
-
-
-    users.push(newUser);
-
-
-    saveUsers(users);
-
-
-    authEvents.emit(
-        "signup",
-        newUser
-    );
-
-
-    res.json({
-
-        success: true,
-
-        message:
-            "Registration successful!"
-
-    });
-
-});
-
-
-// =====================================
-// LOGIN
-// =====================================
-
-app.post("/login", (req, res) => {
-
-    const {
-        email,
-        password
-    } = req.body;
-
-
-    if (!email || !password) {
-
-        return res.status(400).json({
-
-            success: false,
-
-            message:
-                "Please enter email and password."
-
-        });
-    }
-
-
-    const users =
-        readUsers();
-
-
-    const user =
-        users.find(
-            user =>
-                user.email === email &&
-                user.password === password
-        );
-
-
-    if (!user) {
-
-        return res.status(401).json({
-
-            success: false,
-
-            message:
-                "Invalid email or password."
-
-        });
-    }
-
-
-    authEvents.emit(
-        "login",
-        user
-    );
-
-
-    res.json({
-
-        success: true,
-
-        message:
-            "Login successful!",
-
-        name:
-            user.name
-
-    });
-
-});
-
-
-// =====================================
-// START SERVER
-// =====================================
-
-app.listen(
-    PORT,
-    () => {
-
-        console.log(
-            `Server running at http://localhost:${PORT}`
-        );
-
-    }
-);
+// Start application
+startServer();

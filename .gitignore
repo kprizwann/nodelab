@@ -1,1 +1,4 @@
 node_modules/
+audit.log
+user.json
+.env
